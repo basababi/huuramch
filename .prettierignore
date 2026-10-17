@@ -10,3 +10,6 @@ khuuramch-claude-code-prompt.md
 apps/web/src/components/ui/icon-data.ts
 next-env.d.ts
 .turbo/
+packages/content/packs/
+packages/content/data/
+**/coverage/

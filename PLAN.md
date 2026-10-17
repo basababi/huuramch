@@ -3,7 +3,7 @@
 Source of truth: [`CLAUDE.md`](CLAUDE.md). Every deviation or judgment call goes to [`DECISIONS.md`](DECISIONS.md).
 
 Milestones run strictly in order and end with a screenshot pass against §6.7 and a commit.
-Status: **M1 done — awaiting design review.** Next: M2 (game core).
+Status: **M2 done.** Next: M3 (server).
 
 ---
 
@@ -195,17 +195,17 @@ contains words or roles before they are revealed to everyone.
 
 ### M2 — Game core
 
-- [ ] `packages/game-core`: types, seeded rng, settings validation, role assignment, word selection
+- [x] `packages/game-core`: types, seeded rng, settings validation, role assignment, word selection
       (no repeats per room), distractors from same category
-- [ ] Reducer for every phase, both modes; tie → re-vote → no elimination; Mode B end conditions
-- [ ] Timers as actions (`TIMER_EXPIRED`), deadlines stored in state
-- [ ] Scoring table + fun titles; cumulative scores across replays
-- [ ] Late joiners, host migration, disconnect grace (90s) and imposter-disconnect void
-- [ ] `projectStateForPlayer` / `projectStateForTv` + exhaustive no-leak tests (every phase × role × mode)
-- [ ] `packages/content`: ≥150 pairs in 6 categories, premium metadata, validation script
+- [x] Reducer for every phase, both modes; tie → re-vote → no elimination; Mode B end conditions
+- [x] Timers as `TICK` actions against deadlines stored in state (`nextWakeAt` tells the server when)
+- [x] Scoring table + fun titles; cumulative scores across replays
+- [x] Late joiners, host migration, disconnect grace (90s) and imposter-disconnect void
+- [x] `projectStateForPlayer` / `projectStateForTv` + exhaustive no-leak tests (every phase × role × mode)
+- [x] `packages/content`: ≥150 pairs in 6 categories, premium metadata, validation script
       (dupes incl. reversed, ≤16 chars, Mongolian Cyrillic only, fits the role card at ≥44px)
-- [ ] `packages/protocol`: Zod schemas for all events, error codes with Mongolian messages, nickname rules
-- [ ] Vitest coverage report; screenshots pass (unchanged UI) + commit
+- [x] `packages/protocol`: Zod schemas for all events, error codes with Mongolian messages, nickname rules
+- [x] Vitest coverage report; screenshots pass (unchanged UI) + commit
 
 ### M3 — Server
 

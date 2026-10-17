@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "packs": [
+    { "id": "student", "name": "Оюутны амьдрал", "locked": true },
+    { "id": "kpop", "name": "K-pop ба аниме", "locked": true },
+    { "id": "singers", "name": "Монгол дуучид", "locked": true },
+    { "id": "tsagaanSar", "name": "Цагаан сар гэр бүл", "locked": true },
+    { "id": "night", "name": "18+ шөнийн цэнгээн", "locked": true }
+  ]
+}

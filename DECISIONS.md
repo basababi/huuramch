@@ -210,3 +210,86 @@ element on `/`, `/dev/ui`, `/dev/type` in both themes — zero violations, zero 
 | 8   | Emoji, sparkles, stock/3D illustration       | ✅ Phosphor Bold + original SVG animals only                      |
 | 9   | Placeholder copy                             | ✅ real Mongolian copy, all in `src/i18n/mn.ts`                   |
 | 10  | Focus removed                                | ✅ thick yellow ring everywhere (tab-through test)                |
+
+---
+
+## Milestone 2 — Game core, content, protocol
+
+### D-101 · Package builds
+
+`game-core`, `protocol` and `content` build with tsup to ESM **and** CommonJS (+ types): the NestJS
+server is CommonJS, the web app consumes ESM. `game-core` has zero dependencies and zero I/O.
+
+### D-102 · Scoring interpretation (§2.4)
+
+- +1 to each civilian who voted for an imposter in the vote that eliminated that imposter
+  (Mode B can award this several times per game).
+- +3 to each imposter who is **still in** when the imposters win; an eliminated imposter whose
+  correct guess wins Mode A gets the +2 guess bonus instead (the table lists them as separate rows).
+- +1 to each surviving civilian when the civilians win.
+- Points and stats are applied only when a game ends, so a voided game earns nothing (§2.5).
+
+### D-103 · Mode A with two or three imposters
+
+Imposters do not know each other. One vote decides the game: catching _any_ imposter gives that
+imposter the last-chance guess; a wrong guess means the civilians win.
+
+### D-104 · Mode B stalemate
+
+Two elimination rounds in a row without an elimination (double tie or nobody votes) end the game
+as an imposter win. Without this rule a stubborn table could loop forever.
+
+### D-105 · Role reveal never stalls
+
+Everyone confirms "Ойлголоо" → clue turns. The host may force it after 30s (§3.1); after 60s it
+moves on by itself so an absent host cannot freeze the room.
+
+### D-106 · Who the game waits for
+
+Players disconnected **within** the 90s grace period are still waited for (votes, confirmations).
+Players who left or stayed away past the grace period are skipped: no turn, no vote. An absent
+imposter voids the game (§2.5). The host role migrates immediately when the host leaves, or once
+the grace period expires after a disconnect.
+
+### D-107 · Guess options and secrecy
+
+Only the eliminated imposter receives the eight options. In Mode B their own word is never an
+option, and the outcome is shown to everyone as "guessed / missed" without any words, because
+another imposter may still be playing.
+
+### D-108 · Fun titles
+
+"Шилдэг худалч" = most points earned as an imposter, "Мөрдөгч" = most civilian votes cast for an
+actual imposter (re-votes included), "Гэм буруугүй хохирогч" = civilian eliminated most often.
+Ties go to whoever joined first; a zero earns no title.
+
+### D-109 · Replay and late joiners
+
+"Дахин тоглох" returns the room to the lobby with scores kept (§3.1 diagram), so late joiners can
+take a seat and the host can tweak settings before starting. Players who are mid-reconnect when
+a game starts sit it out as spectators.
+
+### D-110 · Content
+
+171 hand-written pairs (28–30 per category). The validator also measures every word with Rubik 800
+metrics extracted by `scripts/font-widths.py`: no word may exceed 6.0em, i.e. every word fits the
+role card at ≥ 44px on a 360px phone. This rejected Улаанбаатар, Сонгинохайрхан, Троллейбус and
+Хүүхэлдэйн, which were replaced. A small off-limits list (politics, religion, alcohol) guards
+against accidental additions. Validate with `pnpm --filter @khuuramch/content validate`.
+
+### D-111 · Zod Mini
+
+The protocol uses `zod/mini` so client-side validation stays small. A compile-time check proves
+the schema output and game-core's view types stay interchangeable.
+
+### D-112 · Nicknames
+
+Blocklist matching folds Latin look-alikes (x→х, o→о…) and leet digits; short roots (хуй, бля,
+ass…) match whole words only so ordinary names are not caught.
+
+### Milestone 2 checks
+
+- game-core: 183 tests, 100% statements/lines/functions, 99.3% branches; no-leak simulations over
+  both modes × 3–12 players × 4 seeds check every player's view and the TV view at every step.
+- content: 17 tests; protocol: 15 tests.
+- No UI changed in this milestone; the M1 screenshots and §6.7 checklist still apply.
