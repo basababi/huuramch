@@ -562,3 +562,37 @@ Final results, default mobile preset (simulated Slow 4G, 4× CPU), machine unloa
 - `e2e/offline.spec.ts`: banner while the server is unreachable; create gives up with a message.
 - `e2e/game.spec.ts`, `e2e/design-audit.spec.ts`, `e2e/budget.spec.ts` still green after the
   changes; screenshots refreshed in `screenshots/milestone-5/`.
+
+---
+
+## Milestone 6 — E2E and docs
+
+### D-501 · What "four real phones" was tested as
+
+`e2e/game.spec.ts` drives four phone-sized browser contexts and a TV in one room through Mode A
+and Mode B with cumulative scores, one phone closing mid-round and coming back. It runs against
+the production build in CI and, with `E2E_BASE_URL=http://<LAN IP>:3000`, against `pnpm dev`
+reached over the machine's LAN address — the path a phone on the same Wi-Fi takes, QR included.
+It passed both ways with zero console errors. Real handsets were not available in this
+environment; the remaining real-device checks are the Ө ө Ү ү rendering on a Samsung phone
+(D-006) and haptics, which browsers cannot report back.
+
+### D-502 · Deploy shape
+
+Web and server deploy separately (README "Deploy"): the web app on Vercel with
+`NEXT_PUBLIC_SERVER_URL`, the server on any Node host with WebSockets behind HTTPS (`wss://`),
+PostgreSQL anywhere. Live rooms are in memory, so the server runs as one instance until the
+`RoomStore` gets a Redis implementation; sessions survive only as long as that process.
+
+### Definition of done (CLAUDE.md §11)
+
+| Item                                                                | Status                                | Evidence                                                                                                                                                                                                                                                                  |
+| ------------------------------------------------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Full game in both modes, 4 phones on one Wi-Fi joined by QR         | ✅ (simulated phones, LAN)            | `e2e/game.spec.ts` against the build and over LAN against `pnpm dev`; QR shows the LAN origin (D-207)                                                                                                                                                                     |
+| No player can see another's word or role before the reveal          | ✅                                    | game-core projection tests (every phase, both modes), server tests (each socket only gets its own secret), TV never shows a word in the E2E                                                                                                                               |
+| Mode B UI identical for civilians and imposters                     | ✅                                    | identical payload shape (game-core test); identical card markup apart from the word (E2E)                                                                                                                                                                                 |
+| Reconnect after locking a phone for 60 s restores the exact state   | ✅                                    | server test: new socket after 60 s keeps seat, role and word; E2E reopens a phone mid-round                                                                                                                                                                               |
+| Ө ө Ү ү render in every weight                                      | ✅                                    | `e2e/glyphs.spec.ts`, `/dev/type` (D-006)                                                                                                                                                                                                                                 |
+| Zero §6.7 violations, screenshots per milestone                     | ✅                                    | `screenshots/milestone-1`, `-4`, `-5`; computed-style audit on every page and every game phase in both themes                                                                                                                                                             |
+| Tests, `tsc`, lint, build pass; Lighthouse targets met and recorded | ✅ tests/build · ⚠️ Lighthouse partly | All checks green in CI. Lighthouse (D-403): accessibility 100 everywhere; performance 92–94 on `/`, `/create`, `/rules` but 82 on `/room`, whose LCP is its first paint (1.1 s under applied Slow 4G) yet is charged for everything requested before it in the simulation |
+| DECISIONS.md explains every deviation                               | ✅                                    | Rubik for Unbounded (D-006), extra socket events (D-018, D-306), `mn-shell.ts` (D-310), lazy loading (D-302/303), inline CSS (D-403)                                                                                                                                      |

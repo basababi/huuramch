@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
-    "e2e": "playwright test --project=audit",
+    "e2e": "playwright test --project=audit --project=game",
     "screenshots": "playwright test --project=screenshots",
     "icons": "node scripts/build-icons.mjs"
   },

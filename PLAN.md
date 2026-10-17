@@ -3,7 +3,7 @@
 Source of truth: [`CLAUDE.md`](CLAUDE.md). Every deviation or judgment call goes to [`DECISIONS.md`](DECISIONS.md).
 
 Milestones run strictly in order and end with a screenshot pass against §6.7 and a commit.
-Status: **M5 done.** Next: M6 (E2E + docs).
+Status: **All six milestones done** (see DECISIONS.md, Definition of done).
 
 ---
 
@@ -239,6 +239,7 @@ contains words or roles before they are revealed to everyone.
 ### M6 — E2E + docs
 
 - [x] Playwright: 4 contexts, full game in Mode A and Mode B, one reconnect mid-round (`e2e/game.spec.ts`,
-      landed with M4 as its acceptance test; M6 extends it)
-- [ ] README: local setup, env, deploy (web → Vercel, server → Node host with WebSockets, Postgres)
-- [ ] Final Definition-of-Done check (CLAUDE.md §11)
+      landed with M4 as its acceptance test; M6 adds the Mode B identical-markup check and runs it
+      in CI)
+- [x] README: local setup, env, deploy (web → Vercel, server → Node host with WebSockets, Postgres)
+- [x] Final Definition-of-Done check (CLAUDE.md §11) — DECISIONS.md, Milestone 6
