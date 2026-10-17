@@ -74,6 +74,8 @@ export async function measureClockOffset(samples = 3): Promise<number | null> {
 export type ServerHandlers = {
   connect(): void;
   disconnect(): void;
+  /** A connection attempt failed (server down, Wi-Fi off); socket.io keeps retrying. */
+  connectError(): void;
   /** Only states that pass the protocol schema arrive here (§3.2: both sides validate). */
   sync(data: StateSync): void;
   kicked(): void;
@@ -85,6 +87,7 @@ export function listen(handlers: ServerHandlers): void {
   const s = getSocket();
   s.on('connect', handlers.connect);
   s.on('disconnect', handlers.disconnect);
+  s.on('connect_error', handlers.connectError);
   s.on(S2C.stateSync, (payload: unknown) => {
     const parsed = stateSyncSchema.safeParse(payload);
     if (!parsed.success) {

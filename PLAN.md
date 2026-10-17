@@ -3,7 +3,7 @@
 Source of truth: [`CLAUDE.md`](CLAUDE.md). Every deviation or judgment call goes to [`DECISIONS.md`](DECISIONS.md).
 
 Milestones run strictly in order and end with a screenshot pass against §6.7 and a commit.
-Status: **M4 done.** Next: M5 (polish).
+Status: **M5 done.** Next: M6 (E2E + docs).
 
 ---
 
@@ -229,9 +229,11 @@ contains words or roles before they are revealed to everyone.
 
 ### M5 — Polish
 
-- [ ] Sounds (TV/host only, mute), haptics, wake lock, reduced motion audit, reconnection banner
-- [ ] Empty/error states, copy pass, `aria-live` for turns and reveals, keyboard support on host/TV
-- [ ] Lighthouse mobile (≥90 perf, ≥95 a11y); record results
+- [x] Sounds (TV/host only, mute), haptics, wake lock, reduced motion audit, reconnection banner
+      (D-401, D-405)
+- [x] Empty/error states, copy pass, `aria-live` for turns and reveals, keyboard support on host/TV
+      (D-402, D-404, D-405)
+- [x] Lighthouse mobile (≥90 perf, ≥95 a11y); record results (D-403)
 - [x] JS budget ≤180 KB gz on the player route — enforced by `e2e/budget.spec.ts` since M4 (D-303)
 
 ### M6 — E2E + docs

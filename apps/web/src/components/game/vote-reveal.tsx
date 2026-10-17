@@ -39,6 +39,7 @@ export function VoteReveal({
   view,
   origin,
   size = 'phone',
+  onRoll,
   onSlip,
   onVerdict,
   onStamp,
@@ -47,6 +48,8 @@ export function VoteReveal({
   /** The reveal phase start on this device's clock (phaseStartedAt − clockOffset). */
   origin: number;
   size?: Size;
+  /** Called once when the count starts on this screen, with the time left until the verdict. */
+  onRoll?: (ms: number) => void;
   /** Sound/haptic hooks; each fires once per step, never for steps skipped on open. */
   onSlip?: () => void;
   onVerdict?: () => void;
@@ -66,7 +69,15 @@ export function VoteReveal({
   const [openedAt] = useState(step);
   const notified = useRef(openedAt);
   const root = useRef<HTMLDivElement>(null);
+  const rolled = useRef(false);
   const s = SIZES[size];
+
+  useEffect(() => {
+    if (rolled.current || openedAt >= plan.verdictStep) return;
+    rolled.current = true;
+    const ms = origin + (plan.times[plan.verdictStep - 1] ?? 0) - Date.now();
+    if (ms > 0) onRoll?.(ms);
+  }, [openedAt, plan, origin, onRoll]);
 
   useEffect(() => {
     if (step <= notified.current) return;

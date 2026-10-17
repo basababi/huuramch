@@ -96,6 +96,11 @@ async function fillProfile(page: Page, name: string, animal: string, submit: str
 
 /** Hold the card, read what it says, let go — exactly what a player does (§5.4). */
 async function readCard(page: Page): Promise<string> {
+  return (await holdCard(page)).text;
+}
+
+/** Hold the card; returns what it says and its markup while face up. */
+async function holdCard(page: Page): Promise<{ text: string; html: string }> {
   const card = page.locator('button[data-role-card]');
   await card.scrollIntoViewIfNeeded();
   const box = await card.boundingBox();
@@ -104,9 +109,21 @@ async function readCard(page: Page): Promise<string> {
   await page.mouse.down();
   await expect(card).toHaveAttribute('aria-pressed', 'true');
   const text = (await page.locator('[data-role-card] + p').textContent())?.trim() ?? '';
+  const html = await page
+    .locator('[data-role-card]')
+    .evaluate((el) => el.parentElement?.outerHTML ?? '');
   await page.mouse.up();
   await expect(card).toHaveAttribute('aria-pressed', 'false');
-  return text;
+  return { text, html };
+}
+
+/** Card markup with the word itself (and the size it was fitted to) taken out. */
+function withoutWord(html: string, word: string): string {
+  return html
+    .split(word)
+    .join('WORD')
+    .replace(/font-size:\s*[\d.]+px;?/g, '')
+    .replace(/white-space:\s*\w+;?/g, '');
 }
 
 /** Hold "Үгээ дахин харах" and read it. */
@@ -320,11 +337,14 @@ test('four phones and a TV play Mode A, then Mode B, with a reconnect', async ({
   await host.page.getByRole('button', { name: mn.lobby.start }).click();
 
   const wordsB = new Map<string, string>();
+  const cardsB = new Map<string, string>();
   for (const phone of phones) {
-    const text = await readCard(phone.page);
+    const { text, html } = await holdCard(phone.page);
     // Mode B: nobody is told their role — every card says "Чиний үг" (§2.3.2).
     expect(text.startsWith(`${mn.roleCard.yourWord}: `)).toBe(true);
-    wordsB.set(phone.name, text.replace(`${mn.roleCard.yourWord}: `, ''));
+    const word = text.replace(`${mn.roleCard.yourWord}: `, '');
+    wordsB.set(phone.name, word);
+    cardsB.set(phone.name, withoutWord(html, word));
     await phone.page.getByRole('button', { name: mn.roleCard.gotIt }).click();
   }
   const counts = new Map<string, number>();
@@ -334,6 +354,11 @@ test('four phones and a TV play Mode A, then Mode B, with a reconnect', async ({
   expect(civilianWord && imposterWord).toBeTruthy();
   const imposterB = phones.find((p) => wordsB.get(p.name) === imposterWord) as Device;
   const civiliansB = phones.filter((p) => p !== imposterB);
+  // DoD §11: Mode B looks the same to an imposter and a civilian — the card face is the same
+  // markup, class for class, apart from the word itself.
+  for (const c of civiliansB) {
+    expect(cardsB.get(imposterB.name)).toBe(cardsB.get(c.name));
+  }
   await expect(tv.page.locator('main')).not.toContainText(civilianWord);
   await expect(tv.page.locator('main')).not.toContainText(imposterWord);
 

@@ -9,6 +9,7 @@ import { Banner } from '../ui/banner';
 import { buttonClass } from '../ui/button';
 import { Icon } from '../ui/icon';
 import { arrowLeft, spinner } from '../ui/icon-data';
+import { SoundToggle } from '../ui/sound-toggle';
 import { ThemeToggle } from '../ui/theme-toggle';
 
 /** "Холболт тасарлаа…" while the socket is down (§7); a short error flash after a rejected tap. */
@@ -64,7 +65,10 @@ export function Screen({
           ) : (
             <span />
           )}
-          <ThemeToggle />
+          <div className="flex items-center gap-2">
+            <RoomSoundToggle />
+            <ThemeToggle />
+          </div>
         </header>
         <main className="flex flex-1 flex-col gap-5 px-4 py-4">
           <StatusBanners />
@@ -112,13 +116,29 @@ export function SectionTitle({ children }: { children: ReactNode }) {
 export function ConnectingScreen({ code }: { code?: string }) {
   return (
     <Screen code={code}>
-      <div
-        role="status"
-        className="flex flex-1 flex-col items-center justify-center gap-4 text-fg-muted"
-      >
-        <Icon icon={spinner} size={40} className="animate-spin" />
-        <p className="text-lg font-bold">{mn.connection.connecting}</p>
+      <div role="status" className="flex flex-1 flex-col items-center justify-center gap-5">
+        {code && (
+          <p className="flex flex-col items-center gap-1">
+            <span className="text-sm font-bold tracking-[0.1em] text-fg-muted uppercase">
+              {mn.lobby.codeLabel}
+            </span>
+            <span className="font-display tabular text-[5rem] leading-none font-black tracking-[0.06em]">
+              {code}
+            </span>
+          </p>
+        )}
+        <p className="flex items-center gap-3 text-lg font-bold text-fg-muted">
+          <Icon icon={spinner} size={28} className="animate-spin" />
+          {mn.connection.connecting}
+        </p>
       </div>
     </Screen>
   );
+}
+
+/** The mute toggle, once this phone has a seat; on by default for the host only (§5). */
+function RoomSoundToggle() {
+  const joined = useGame((s) => s.view !== null);
+  const isHost = useGame((s) => Boolean(s.view?.me.isHost));
+  return joined ? <SoundToggle defaultOn={isHost} /> : null;
 }

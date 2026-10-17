@@ -193,7 +193,7 @@ export function LobbyScreen({ view }: { view: PlayerView }) {
             setKickTarget(null);
           }}
         >
-          {kickTarget ? mn.lobby.kick(kickTarget.name) : ''}
+          {mn.lobby.kick}
         </Button>
       </Sheet>
     </Screen>

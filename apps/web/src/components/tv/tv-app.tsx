@@ -2,17 +2,24 @@
 
 import { lazy, Suspense, useEffect, type ReactNode } from 'react';
 import { mn } from '@/i18n/mn';
+import { useAudioRunning, useAudioUnlock, useSoundOn } from '@/lib/sound';
 import { useWakeLock } from '@/lib/use-wake-lock';
-import { useGame } from '@/store/game';
+import { useGame, warmUpNetwork } from '@/store/game';
 import { Banner } from '../ui/banner';
 import { Icon } from '../ui/icon';
 import { spinner } from '../ui/icon-data';
+import { SoundToggle } from '../ui/sound-toggle';
 import { ThemeToggle } from '../ui/theme-toggle';
 import { TvCenter, TvStage } from './tv-stage';
 
-/* The phase layouts load as their own chunk, requested as soon as the shell hydrates. */
+/*
+ * The network layer, the phase layouts and motion load as their own chunks: the socket as soon as
+ * this module runs (while React is still hydrating), the layouts right after the first paint.
+ */
 const loadPhases = () => import('./tv-phases');
 const loadMotion = () => import('../motion-provider');
+if (typeof window !== 'undefined') warmUpNetwork();
+
 const TvPhase = lazy(() => loadPhases().then((m) => ({ default: m.TvPhase })));
 const MotionProvider = lazy(() => loadMotion().then((m) => ({ default: m.MotionProvider })));
 
@@ -35,6 +42,9 @@ export function TvApp({ code }: { code: string }) {
 
   // The shared screen stays on for the whole evening.
   useWakeLock(true);
+  const soundOn = useSoundOn(true);
+  const audioRunning = useAudioRunning();
+  useAudioUnlock(soundOn);
 
   let body: ReactNode;
   if (stage === 'missing' || stage === 'expired') {
@@ -81,6 +91,10 @@ export function TvApp({ code }: { code: string }) {
             {mn.room.label}
             <span className="font-display tabular">{code}</span>
           </span>
+          {soundOn && !audioRunning && (
+            <span className="text-[1.25rem] font-semibold text-fg-muted">{mn.tv.tapForSound}</span>
+          )}
+          <SoundToggle defaultOn />
           <ThemeToggle />
         </div>
       </header>

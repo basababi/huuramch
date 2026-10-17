@@ -471,3 +471,94 @@ Evidence: `screenshots/milestone-4/` (every phase on a phone in dark + light, th
 | 8   | Emoji, sparkles, stock/3D illustration       | ✅ Phosphor Bold, original SVG animals, rules art and stamp        |
 | 9   | Placeholder copy                             | ✅ Mongolian game copy throughout                                  |
 | 10  | Focus removed                                | ✅ yellow ring kept; dialogs use native `<dialog>` focus handling  |
+
+---
+
+## Milestone 5 — Polish
+
+### D-401 · Sound, synthesised
+
+The three effects §5 asks for — a tick in the last five seconds, a drumroll, the stamp — plus a
+paper slap for every ballot slip are synthesised with Web Audio (`lib/sound.ts`): no audio files to
+download or license, about 2 KB of code. The tick shares the timer ring's clock, so sound and digit
+change together; the drumroll swells from the start of the count to the verdict and the stamp lands
+with the slam, on every screen in step (D-304). The TV and the host's phone play sound by default;
+players' phones stay silent unless someone taps the speaker toggle in the header (remembered per
+device). With a TV in the room the host usually mutes their phone so only the TV plays — the server
+does not tell phones whether a TV is watching. Browsers only start audio inside a tap, so the
+context unlocks on the first tap anywhere (only on devices with sound on); the TV says "Дуу
+асаахын тулд дэлгэц дээр нэг дар" until then.
+
+### D-402 · Network loss
+
+- A failed connection attempt (server down, Wi-Fi off) shows the same inline "Холболт тасарлаа,
+  дахин холбогдож байна…" banner as a dropped connection; socket.io keeps retrying with backoff.
+- Creating a room or joining gives up after 10 s with "Сервер хариу өгсөнгүй. Дахин оролдоорой."
+  instead of a spinner that never stops.
+- If the network chunk itself fails to download, it is retried with backoff under the banner.
+- `e2e/offline.spec.ts` cuts the game server (HTTP and WebSocket) and checks both states.
+
+### D-403 · Performance (§7)
+
+Changes, each measured with Lighthouse 13.5 (mobile preset, Slow 4G):
+
+1. The `/dev/type` evidence faces (Unbounded, Golos Text) were preloaded on every page because
+   next/font hoists font CSS into the shared stylesheet. `preload: false` removes ~145 KB from every
+   first load; only Rubik and Onest (6 files, ~122 KB) are preloaded.
+2. CSS is inlined into the HTML (`experimental.inlineCss`): no render-blocking stylesheet round
+   trip. Under applied Slow 4G throttling, LCP went 2.6 → 1.4 s on `/` and 3.0 → 1.1 s on `/room`.
+   The price: Next also keeps the CSS in the RSC payload, so the HTML grows from 5 KB to 37 KB gz.
+   On a slow link the saved round trip is worth more than those bytes.
+3. The room and TV apps request the network layer when their module evaluates — while React is
+   still hydrating — and the screen chunks and motion right after the first paint. Requesting the
+   screens before the paint competed with the critical chunks and made Lighthouse count them
+   toward LCP (`/room` 79 → 83–86).
+4. The room's server-rendered first paint is the room code in big display type with "Холбогдож
+   байна…": the thing you are joining, shown at once. It stays outside any Suspense boundary, so
+   hydration never swaps its DOM, and on a real phone LCP happens at first paint.
+5. Tried and dropped: preloading only the display font (LCP within noise, a small font-swap layout
+   shift).
+
+Final results, default mobile preset (simulated Slow 4G, 4× CPU), machine unloaded:
+
+| Route     | Perf | A11y | Best practices | SEO | FCP   | LCP   | TBT    | CLS |
+| --------- | ---- | ---- | -------------- | --- | ----- | ----- | ------ | --- |
+| `/`       | 94   | 100  | 100            | 100 | 0.9 s | 3.0 s | 100 ms | 0   |
+| `/create` | 92   | 100  | 100            | 100 | 1.1 s | 3.3 s | 60 ms  | 0   |
+| `/room`   | 82   | 100  | 100            | 60  | 0.8 s | 4.1 s | 250 ms | 0   |
+| `/rules`  | 93   | 100  | 100            | 100 | 1.2 s | 3.1 s | 120 ms | 0   |
+
+- Accessibility is 100 on every route in every run (target ≥ 95) ✅.
+- Performance ≥ 90 on `/`, `/create` and `/rules` ✅. `/room` stays in the 80s: Lighthouse's
+  simulation charges everything requested before the observed first paint (fonts, the framework,
+  the socket layer — ~300 KB) to LCP. Measured directly, the room's LCP is its first paint:
+  0.2–0.3 s unthrottled, 1.1 s under applied Slow 4G throttling (≤ 2.0 s target ✅).
+- `/room` SEO is 60 by design: room pages are `noindex`.
+- Results depend heavily on this laptop's load: its benchmark index swung between 290 and 3100
+  across runs (Lighthouse's 4× CPU slowdown assumes ~1000+); on a busy machine every route lost
+  10–30 points. An unthrottled CPU profile of a page load shows about 150 ms of JavaScript.
+- Initial JS stays enforced by `e2e/budget.spec.ts` (D-303).
+
+### D-404 · Copy pass
+
+- The kick button no longer glues a case suffix to a name (`Бат-г` is wrong; Mongolian suffixes
+  follow the name's vowels): the sheet's title is the name, the button says "Өрөөнөөс гаргах".
+- The TV's sound hint uses the informal "чи" form like the rest of the app.
+- Waiting screens all name who or what we are waiting for (D-312); every string still lives in
+  `i18n/mn.ts` (plus the four error-boundary strings in `mn-shell.ts`, D-310).
+
+### D-405 · Haptics, wake lock, motion, keyboard
+
+- Haptics (Android only, silently skipped on iOS): "ЧИНИЙ ЭЭЛЖ", vote locked, stamp landing.
+- Screen Wake Lock on phones during a game and on the TV all evening, re-acquired when the tab
+  becomes visible again.
+- Reduced motion: CSS animations and transitions collapse to instant, `motion` drops transform
+  animations (`reducedMotion="user"`), the stamp shake is skipped, the reveal still plays in steps.
+- Keyboard: every control is a native button, link, input or `<dialog>`; the role card and the
+  word peek open while Space/Enter is held; the TV's toggles are focusable with the yellow ring.
+
+### Milestone 5 checks
+
+- `e2e/offline.spec.ts`: banner while the server is unreachable; create gives up with a message.
+- `e2e/game.spec.ts`, `e2e/design-audit.spec.ts`, `e2e/budget.spec.ts` still green after the
+  changes; screenshots refreshed in `screenshots/milestone-5/`.

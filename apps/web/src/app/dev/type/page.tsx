@@ -14,8 +14,18 @@ export const metadata: Metadata = {
  * Loaded on this page only: Golos Text (the spec's first UI fallback) for comparison, and
  * Unbounded — the spec's display face — kept here as the evidence for why it was replaced.
  */
-const golos = Golos_Text({ subsets: ['cyrillic', 'cyrillic-ext', 'latin'], display: 'swap' });
-const unbounded = Unbounded({ subsets: ['cyrillic', 'cyrillic-ext', 'latin'], display: 'swap' });
+// `preload: false`: the font CSS is shared across routes, so a preload here would make every page
+// download these two evidence faces (~145 KB) up front.
+const golos = Golos_Text({
+  subsets: ['cyrillic', 'cyrillic-ext', 'latin'],
+  display: 'swap',
+  preload: false,
+});
+const unbounded = Unbounded({
+  subsets: ['cyrillic', 'cyrillic-ext', 'latin'],
+  display: 'swap',
+  preload: false,
+});
 
 const FONTS: FontSpec[] = [
   {

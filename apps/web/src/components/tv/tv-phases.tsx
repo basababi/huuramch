@@ -8,6 +8,7 @@ import { avatarColor } from '@/design/tokens';
 import { mn } from '@/i18n/mn';
 import { cn } from '@/lib/cn';
 import { shareableOrigin } from '@/lib/server-url';
+import { sfx } from '@/lib/sound';
 import { useGame } from '@/store/game';
 import { Avatar } from '../game/avatar';
 import { playerPop } from '../game/player-tile';
@@ -21,6 +22,7 @@ import { WinnerBanner } from '../game/winner-banner';
 import { WordReveal } from '../game/word-reveal';
 import { ranked } from '../screens/result-screen';
 import { PhaseTimer } from '../screens/phase-timer';
+import { useRoomSound } from '../screens/use-room-sound';
 import { alivePlayers, nameOf, playerById } from '../screens/view-helpers';
 import { Icon } from '../ui/icon';
 import { checkFat, eyeSlash, x } from '../ui/icon-data';
@@ -226,7 +228,17 @@ function TvVoting({ view }: { view: TvView }) {
 
 function TvReveal({ view }: { view: TvView }) {
   const offset = useGame((s) => s.clockOffset);
-  return <VoteReveal view={view} origin={view.phaseStartedAt - offset} size="tv" />;
+  const sound = useRoomSound();
+  return (
+    <VoteReveal
+      view={view}
+      origin={view.phaseStartedAt - offset}
+      size="tv"
+      onRoll={sound ? sfx.drumroll : undefined}
+      onSlip={sound ? sfx.slip : undefined}
+      onStamp={sound ? sfx.stamp : undefined}
+    />
+  );
 }
 
 function TvGuess({ view }: { view: TvView }) {

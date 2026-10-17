@@ -6,6 +6,7 @@ import { avatarColor } from '@/design/tokens';
 import { mn } from '@/i18n/mn';
 import { cn } from '@/lib/cn';
 import { HAPTICS, vibrate } from '@/lib/haptics';
+import { sfx } from '@/lib/sound';
 import { useGame } from '@/store/game';
 import { VoteReveal } from '../game/vote-reveal';
 import { WaitingState } from '../game/waiting-state';
@@ -14,16 +15,26 @@ import { Icon } from '../ui/icon';
 import { checkFat, question, x } from '../ui/icon-data';
 import { PhaseTimer } from './phase-timer';
 import { Screen } from './shell';
+import { useRoomSound } from './use-room-sound';
 import { playerById } from './view-helpers';
 
-const onStamp = () => vibrate(HAPTICS.reveal);
-
-/** Vote reveal (§5.8) on a phone: the shared sequence, plus a buzz as the stamp lands. */
+/** Vote reveal (§5.8) on a phone: the shared sequence, a buzz as the stamp lands, sound for the host. */
 export function RevealScreen({ view }: { view: PlayerView }) {
   const offset = useGame((s) => s.clockOffset);
+  const sound = useRoomSound();
+  const onStamp = () => {
+    vibrate(HAPTICS.reveal);
+    if (sound) sfx.stamp();
+  };
   return (
     <Screen code={view.code}>
-      <VoteReveal view={view} origin={view.phaseStartedAt - offset} onStamp={onStamp} />
+      <VoteReveal
+        view={view}
+        origin={view.phaseStartedAt - offset}
+        onRoll={sound ? sfx.drumroll : undefined}
+        onSlip={sound ? sfx.slip : undefined}
+        onStamp={onStamp}
+      />
     </Screen>
   );
 }

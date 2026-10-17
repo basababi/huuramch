@@ -144,7 +144,8 @@ export const mn = {
     host: 'Хөтлөгч',
     you: 'Чи',
     eliminated: 'Хасагдсан',
-    kick: (name: string) => `${name}-г гаргах`,
+    // No case suffix after a name: Mongolian suffixes follow the name's vowels (Бат-ыг, Сараа-г).
+    kick: 'Өрөөнөөс гаргах',
     tvScreen: 'ТВ дэлгэц',
     tvHint: (url: string) => `Том дэлгэц дээр ${url} нээгээрэй`,
     voided: 'Хуурамч гарсан тул тоглолт хүчингүй боллоо. Оноо тооцогдсонгүй.',
@@ -285,6 +286,7 @@ export const mn = {
     secretsHidden: 'Нууц үг энд хэзээ ч харагдахгүй',
     mute: 'Дуу хаах',
     unmute: 'Дуу нээх',
+    tapForSound: 'Дуу асаахын тулд дэлгэц дээр нэг дар',
   },
 
   rules: {

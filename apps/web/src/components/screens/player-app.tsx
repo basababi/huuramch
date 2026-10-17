@@ -3,9 +3,11 @@
 import { ACTIVE_PHASES, type PlayerView } from '@khuuramch/game-core';
 import { lazy, Suspense, useEffect, type ReactNode } from 'react';
 import { mn } from '@/i18n/mn';
+import { useAudioUnlock } from '@/lib/sound';
 import { useWakeLock } from '@/lib/use-wake-lock';
-import { useGame } from '@/store/game';
+import { useGame, warmUpNetwork } from '@/store/game';
 import { ConnectingScreen, MessageScreen } from './shell';
+import { useRoomSound } from './use-room-sound';
 import { playerById } from './view-helpers';
 
 /*
@@ -23,6 +25,10 @@ const load = {
   reveal: () => import('./reveal-screen'),
   result: () => import('./result-screen'),
 };
+
+// The socket comes first: start it while React is still hydrating (on a slow phone that is
+// hundreds of ms before an effect runs). The screen chunks follow right after the first paint.
+if (typeof window !== 'undefined') warmUpNetwork();
 
 const MotionProvider = lazy(() => load.motion().then((m) => ({ default: m.MotionProvider })));
 const JoinScreen = lazy(() => load.join().then((m) => ({ default: m.JoinScreen })));
@@ -53,6 +59,9 @@ export function PlayerApp({ code }: { code: string }) {
 
   // Phones must not sleep mid-round (§5).
   useWakeLock(stage === 'playing' && view !== null && view.phase !== 'LOBBY');
+  // Browsers only start audio inside a tap; the host taps plenty before the first tick. Phones
+  // with sound off never create an audio context at all.
+  useAudioUnlock(useRoomSound());
 
   let screen: ReactNode = null;
   switch (stage) {
@@ -70,9 +79,11 @@ export function PlayerApp({ code }: { code: string }) {
       break;
   }
   const waiting = <ConnectingScreen code={code} />;
+  // The server-rendered first paint stays plain HTML (no Suspense boundary to swap on hydration).
+  if (!screen) return waiting;
   return (
     <Suspense fallback={waiting}>
-      <MotionProvider>{screen ?? waiting}</MotionProvider>
+      <MotionProvider>{screen}</MotionProvider>
     </Suspense>
   );
 }

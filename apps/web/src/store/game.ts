@@ -78,7 +78,9 @@ export const useGame = create<GameStore>()((set, get) => ({
   async join(nickname, animal) {
     const code = get().code;
     if (!code) return { code: 'ROOM_NOT_FOUND', message: mn.connection.roomNotFound };
-    const { emitAck } = await connected();
+    const mod = await connected(ACTION_TIMEOUT_MS);
+    if (!mod) return TIMEOUT;
+    const { emitAck } = mod;
     const ack = await emitAck<JoinAck>('room:join', { code, nickname, avatar: animal });
     if (!ack.ok) {
       if (ack.error.code === 'AVATAR_TAKEN' || ack.error.code === 'ROOM_FULL') {
@@ -93,7 +95,9 @@ export const useGame = create<GameStore>()((set, get) => ({
   },
 
   async createRoom(nickname, animal, settings) {
-    const { emitAck } = await connected();
+    const mod = await connected(ACTION_TIMEOUT_MS);
+    if (!mod) return { ok: false, error: TIMEOUT };
+    const { emitAck } = mod;
     const ack = await emitAck<CreateAck>('room:create', { nickname, avatar: animal, settings });
     if (!ack.ok) return { ok: false, error: ack.error };
     saveSession({
@@ -143,22 +147,50 @@ async function refreshPeek(code: string): Promise<void> {
 type Net = typeof NetModule;
 let loading: Promise<Net> | null = null;
 
+/** Creating or joining gives up after this long without a connection, with a clear message. */
+const ACTION_TIMEOUT_MS = 10_000;
+const TIMEOUT: AckError = { code: 'INTERNAL', message: mn.connection.timeout };
+
+/** Starts loading the network layer early, e.g. while React is still hydrating the room. */
+export function warmUpNetwork(): void {
+  if (typeof window !== 'undefined') void net();
+}
+
 /**
- * The network layer (socket.io-client + Zod schemas) loads on first use, after hydration, and is
- * wired to the store exactly once.
+ * The network layer (socket.io-client + Zod schemas) is its own chunk, kept out of the initial JS
+ * (D-302) and wired to the store exactly once. If the chunk fails to arrive (Wi-Fi dropped right
+ * after the page loaded) it is retried with backoff while the "reconnecting" banner shows.
  */
 function net(): Promise<Net> {
-  loading ??= import('@/lib/socket').then((mod) => {
-    wire(mod);
-    return mod;
-  });
+  loading ??= loadNet();
   return loading;
 }
 
-/** Resolves with the network layer once the socket is connected. */
-async function connected(): Promise<Net> {
+async function loadNet(): Promise<Net> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      const mod = await import('@/lib/socket');
+      wire(mod);
+      return mod;
+    } catch {
+      useGame.setState({ connection: 'reconnecting' });
+      await new Promise((resolve) => setTimeout(resolve, Math.min(5000, 500 * 2 ** attempt)));
+    }
+  }
+}
+
+/** The network layer once the socket is connected; `null` if `timeoutMs` passes first. */
+async function connected(): Promise<Net>;
+async function connected(timeoutMs: number): Promise<Net | null>;
+async function connected(timeoutMs?: number): Promise<Net | null> {
   const mod = await net();
-  await mod.whenConnected();
+  const ok = await (timeoutMs === undefined
+    ? mod.whenConnected().then(() => true)
+    : Promise.race([
+        mod.whenConnected().then(() => true),
+        new Promise<false>((resolve) => setTimeout(() => resolve(false), timeoutMs)),
+      ]));
+  if (!ok) return null;
   useGame.setState({ connection: 'online' });
   return mod;
 }
@@ -186,6 +218,9 @@ function wire(mod: Net): void {
       });
     },
     disconnect() {
+      useGame.setState({ connection: 'reconnecting' });
+    },
+    connectError() {
       useGame.setState({ connection: 'reconnecting' });
     },
     sync({ rev, view }) {
