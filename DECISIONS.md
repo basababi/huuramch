@@ -293,3 +293,65 @@ ass…) match whole words only so ordinary names are not caught.
   both modes × 3–12 players × 4 seeds check every player's view and the TV view at every step.
 - content: 17 tests; protocol: 15 tests.
 - No UI changed in this milestone; the M1 screenshots and §6.7 checklist still apply.
+
+---
+
+## Milestone 3 — Server
+
+### D-201 · Plain classes, thin Nest shell
+
+`RoomService`, `ContentService`, `AnalyticsService` and the stores are plain TypeScript built by
+Nest factory providers. Decorators live only in the gateway, controllers and module, so the game
+server is unit-testable without decorator metadata. NestJS stays on 11.x as the spec asks.
+
+### D-202 · Async stores, serial rooms
+
+`RoomStore` and `SessionStore` are async interfaces with in-memory implementations, ready for
+Redis. Every action on a room runs through a per-room promise queue, so two taps can never
+interleave even once the store is remote.
+
+### D-203 · Server-authoritative time
+
+One timer per room, aimed at game-core's `nextWakeAt` (phase deadline or the next grace expiry).
+Every `state:sync` carries `serverNow`; `clock:ping` lets clients measure their offset (§3.1).
+
+### D-204 · Sessions and reconnection
+
+Session tokens are 192-bit random strings stored with `{ code, playerId }`. A player may have
+several sockets (two tabs); they count as disconnected only when the last one closes. Rejoin on any
+new socket within the 90s grace restores seat, role and word (tested with real sockets).
+Leaving or being kicked burns the session.
+
+### D-205 · Abuse limits
+
+Socket.IO: 10-action burst, 3 actions/s per socket, 16 KB max payload, 10s ping/timeout so dead
+phones are noticed quickly. HTTP pack events: 20 burst, 1/s per IP — the IP is a rate-limit key in
+memory only, never stored (§8).
+
+### D-206 · PostgreSQL is optional in development
+
+With `DATABASE_URL` the server runs TypeORM migrations, reads word packs from Postgres and writes
+analytics there (verified against `docker compose` Postgres 17: migration, seed of 171 pairs,
+events, stats). Without it, the bundled pack and an in-memory analytics buffer are used, so
+`pnpm dev` works with no setup. Entities use `EntitySchema` (no decorators). The compose file's
+host port is configurable (`POSTGRES_PORT`) because 5432 is often taken.
+
+### D-207 · LAN address for the lobby QR
+
+`GET /network` lists this machine's LAN IPv4 addresses, Wi-Fi first, virtual adapters (VirtualBox,
+Hyper-V, Docker, VPNs) skipped, so a host who opened `localhost` still gets a QR that phones on the
+same Wi-Fi can open. Off in production unless `EXPOSE_LAN=true`.
+
+### D-208 · Admin stats and monetisation stub
+
+`GET /admin/stats?days=30` with header `x-admin-secret` (timing-safe compare; route disabled when
+`ADMIN_SECRET` is unset) returns games per day (Ulaanbaatar dates), average players, replay rate,
+mode split, top categories, winners and locked-pack interest. `EntitlementService` is an interface
+with a no-op implementation, keyed by an anonymous host account id for a future QPay integration.
+
+### Milestone 3 checks
+
+- server: 23 tests — room service with fake timers (full game, reconnection, kick, expiry, TV,
+  rate limits) and an end-to-end suite that boots the compiled server and plays Mode A (with a
+  mid-game reconnect) and Mode B with four real Socket.IO clients. Stable over repeated runs.
+- No UI changed in this milestone.

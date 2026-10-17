@@ -3,7 +3,7 @@
 Source of truth: [`CLAUDE.md`](CLAUDE.md). Every deviation or judgment call goes to [`DECISIONS.md`](DECISIONS.md).
 
 Milestones run strictly in order and end with a screenshot pass against §6.7 and a commit.
-Status: **M2 done.** Next: M3 (server).
+Status: **M3 done.** Next: M4 (web app flows).
 
 ---
 
@@ -209,13 +209,13 @@ contains words or roles before they are revealed to everyone.
 
 ### M3 — Server
 
-- [ ] NestJS 11 app, Socket.IO gateway, Zod validation pipe, typed acks
-- [ ] `RoomStore` interface + in-memory implementation, 4-digit codes, 2h expiry sweep
-- [ ] Server-authoritative timers, clock ping, `state:sync` per socket projection
-- [ ] Sessions + reconnection (90s grace), host migration, kick, rate limiting
-- [ ] PostgreSQL via TypeORM: word packs, analytics events; seed script; docker-compose; `.env.example`
-- [ ] Analytics events (anonymous) + admin stats endpoint (env secret), `EntitlementService` stub
-- [ ] Integration tests with real socket.io clients; commit
+- [x] NestJS 11 app, Socket.IO gateway, Zod validation in the room service, typed acks
+- [x] `RoomStore` interface + in-memory implementation, 4-digit codes, 2h expiry sweep
+- [x] Server-authoritative timers, clock ping, `state:sync` per socket projection
+- [x] Sessions + reconnection (90s grace), host migration, kick, rate limiting
+- [x] PostgreSQL via TypeORM: word packs, analytics events; seed script; docker-compose; `.env.example`
+- [x] Analytics events (anonymous) + admin stats endpoint (env secret), `EntitlementService` stub
+- [x] Integration tests with real socket.io clients; commit
 
 ### M4 — Web app flows
 

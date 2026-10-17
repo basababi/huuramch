@@ -3,7 +3,7 @@ import { ANIMAL_IDS, DURATIONS } from '../src/constants';
 import { createRoom, currentSpeakerId, nextWakeAt, reduce } from '../src/machine';
 import { migrateHostIfNeeded } from '../src/players';
 import { seededRng } from '../src/rng';
-import { POOL, T0, act, lobby, pid, reject, start, tick } from './helpers';
+import { POOL, T0, act, confirmAll, lobby, pid, reject, round, start, tick } from './helpers';
 
 describe('room creation', () => {
   it('puts the host in the lobby on seat 0', () => {
@@ -257,12 +257,23 @@ describe('reconnecting', () => {
 describe('nextWakeAt', () => {
   it('is the phase deadline or the earliest grace expiry, whichever is first', () => {
     const game = lobby(4);
-    expect(nextWakeAt(game.state)).toBeNull();
+    expect(nextWakeAt(game.state, game.now)).toBeNull();
     act(game, { type: 'DISCONNECT', playerId: 'p3' });
     const graceEnd = game.now + DURATIONS.graceMs;
-    expect(nextWakeAt(game.state)).toBe(graceEnd);
+    expect(nextWakeAt(game.state, game.now)).toBe(graceEnd);
     start(game);
-    expect(nextWakeAt(game.state)).toBe(Math.min(game.now + DURATIONS.roleRevealMs, graceEnd));
+    expect(nextWakeAt(game.state, game.now)).toBe(
+      Math.min(game.now + DURATIONS.roleRevealMs, graceEnd),
+    );
+  });
+
+  it('never wakes for a grace period that has already run out', () => {
+    const game = confirmAll(start(lobby(4, { turnTimer: false })));
+    const civilian = round(game).participants.find((id) => !round(game).imposters.includes(id));
+    act(game, { type: 'DISCONNECT', playerId: civilian as string });
+    tick(game, DURATIONS.graceMs);
+    // The absent civilian stays in the game, but there is nothing left to wait for.
+    expect(nextWakeAt(game.state, game.now)).toBeNull();
   });
 
   it('touches lastActivityAt for real actions but not for TICK', () => {

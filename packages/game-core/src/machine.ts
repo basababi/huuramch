@@ -634,13 +634,17 @@ export function reduce(state: RoomState, action: Action, now: number, rng: Rng):
   return { ok: true, state: ctx.s, events: ctx.events };
 }
 
-/** When the server should send the next TICK: the phase deadline or a grace-period expiry. */
-export function nextWakeAt(state: RoomState): number | null {
+/**
+ * When the server should send the next TICK: the phase deadline or an upcoming grace-period
+ * expiry. Expiries already in the past are handled and must not wake the server again.
+ */
+export function nextWakeAt(state: RoomState, now: number): number | null {
   const times: number[] = [];
   if (state.deadline !== null) times.push(state.deadline);
   for (const p of state.players) {
     if (!p.connected && !p.left && p.disconnectedAt !== null) {
-      times.push(p.disconnectedAt + DURATIONS.graceMs);
+      const expiry = p.disconnectedAt + DURATIONS.graceMs;
+      if (expiry > now) times.push(expiry);
     }
   }
   return times.length ? Math.min(...times) : null;
