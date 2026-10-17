@@ -11,6 +11,8 @@ export default defineConfig([
     '**/.turbo/**',
     'apps/web/**',
     '**/node_modules/**',
+    // tsup writes this temp file while a build runs next to lint.
+    '**/tsup.config.bundled_*.mjs',
   ]),
   js.configs.recommended,
   ...tseslint.configs.recommended,

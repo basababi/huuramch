@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { cn } from '@/lib/cn';
 import { Icon, type IconData } from './icon';
-import { sealCheck, spinner, warning, wifiSlash } from './icon-data';
+import { info, sealCheck, spinner, warning, wifiSlash } from './icon-data';
 
 type BannerTone = 'reconnecting' | 'success' | 'error' | 'info';
 
@@ -9,7 +9,7 @@ const config: Record<BannerTone, { icon: IconData; className: string; role: 'sta
   {
     reconnecting: { icon: wifiSlash, className: 'bg-alt on-light', role: 'status' },
     success: { icon: sealCheck, className: 'bg-nogoon on-light', role: 'status' },
-    info: { icon: wifiSlash, className: 'bg-tsenher on-light', role: 'status' },
+    info: { icon: info, className: 'bg-tsenher on-light', role: 'status' },
     // Red behind 15px text would miss AA, so errors use a red icon block on the normal surface.
     error: { icon: warning, className: 'bg-raised text-fg', role: 'alert' },
   };

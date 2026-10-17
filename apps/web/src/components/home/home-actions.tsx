@@ -21,15 +21,7 @@ export function HomeActions() {
 
   return (
     <div className="flex flex-col gap-4">
-      {/* prefetch off until /create exists (M4); then drop it and enable typedRoutes. */}
-      <ButtonLink
-        href="/create"
-        prefetch={false}
-        tone="primary"
-        size="lg"
-        block
-        iconStart={<Icon icon={plus} />}
-      >
+      <ButtonLink href="/create" tone="primary" size="lg" block iconStart={<Icon icon={plus} />}>
         {mn.home.create}
       </ButtonLink>
       {joining ? (

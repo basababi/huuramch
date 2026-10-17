@@ -29,13 +29,16 @@ export function PlayerTile({
   player,
   size = 64,
   idle = false,
+  onSelect,
 }: {
   player: PlayerSummary;
   size?: number;
   idle?: boolean;
+  /** Makes the tile a button (the host's lobby: tap a player to manage them). */
+  onSelect?: () => void;
 }) {
-  return (
-    <m.li {...playerPop} className="flex min-w-0 flex-col items-center gap-1.5">
+  const body = (
+    <>
       <div className="relative">
         <Avatar
           animal={player.animal}
@@ -44,6 +47,7 @@ export function PlayerTile({
           idle={idle}
           eliminated={player.eliminated}
           label={player.name}
+          decorative={Boolean(onSelect)}
         />
         {player.isHost && (
           <span className="absolute -top-1.5 -right-1.5 grid size-7 place-items-center rounded-pill bg-alt text-ink ink-border">
@@ -59,6 +63,21 @@ export function PlayerTile({
       >
         {player.name}
       </span>
+    </>
+  );
+  return (
+    <m.li {...playerPop} className="flex min-w-0 flex-col items-center gap-1.5">
+      {onSelect ? (
+        <button
+          type="button"
+          onClick={onSelect}
+          className="flex max-w-full min-w-0 touch-manipulation flex-col items-center gap-1.5 rounded-card p-1"
+        >
+          {body}
+        </button>
+      ) : (
+        body
+      )}
     </m.li>
   );
 }

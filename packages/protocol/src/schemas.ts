@@ -4,6 +4,8 @@ import {
   GUESS_OPTIONS,
   MAX_PLAYERS,
   TIMER_PRESETS,
+  type AnimalId,
+  type Phase,
   type TimerPreset,
 } from '@khuuramch/game-core';
 import * as z from 'zod/mini';
@@ -45,13 +47,15 @@ export const C2SSchemas = {
     code: roomCode,
     sessionToken: z.string().check(z.minLength(16), z.maxLength(128)),
   }),
+  'room:peek': z.object({ code: roomCode }),
   'room:leave': empty,
   'room:updateSettings': z.partial(settingsSchema),
   'room:kick': z.object({ playerId: id }),
   'game:start': empty,
   'role:confirm': empty,
   'role:force': empty,
-  'turn:done': empty,
+  /** `turnIndex`: the turn this phone saw end; a stale tap is ignored (never skips a speaker). */
+  'turn:done': z.object({ turnIndex: z.optional(z.number().check(z.int(), z.minimum(0))) }),
   'discussion:skip': empty,
   'vote:cast': z.object({ targetId: id }),
   'guess:submit': z.object({
@@ -69,6 +73,12 @@ export type C2SPayloads = { [K in keyof typeof C2SSchemas]: z.infer<(typeof C2SS
 export type CreateAck = { code: string; playerId: string; sessionToken: string };
 export type JoinAck = { code: string; playerId: string; sessionToken: string };
 export type RejoinAck = { playerId: string };
+/** What a phone may know about a room before joining it: enough to pick a free animal. */
+export type PeekAck = {
+  phase: Phase;
+  full: boolean;
+  players: Array<{ name: string; animal: AnimalId }>;
+};
 export type ClockAck = { t0: number; serverNow: number };
 
 // ── server → client: the projected views (mirror game-core/projection.ts) ────────────────────

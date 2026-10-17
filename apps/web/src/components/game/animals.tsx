@@ -1,5 +1,9 @@
+import type { AnimalId } from '@khuuramch/game-core';
 import type { ReactNode } from 'react';
 import { COLORS } from '@/design/tokens';
+
+/** One avatar per player per room (§2.5); the list itself is shared with the server. */
+export { ANIMAL_IDS, type AnimalId } from '@khuuramch/game-core';
 
 /**
  * Twelve original animal heads on one construction grid (§6.6):
@@ -7,23 +11,6 @@ import { COLORS } from '@/design/tokens';
  * flat fills in paper and ink (plus yellow beaks) — the seat colour behind them does the rest.
  * Each head is drawn back-to-front: body, ears/horns, head, markings, eyes.
  */
-export const ANIMAL_IDS = [
-  'temee',
-  'mori',
-  'khoni',
-  'yamaa',
-  'ukher',
-  'sarlag',
-  'uneg',
-  'chono',
-  'tarvaga',
-  'irves',
-  'shonkhor',
-  'burged',
-] as const;
-
-export type AnimalId = (typeof ANIMAL_IDS)[number];
-
 export const INK = COLORS.ink;
 export const PAPER = COLORS.paper;
 /** Birds of prey get the one extra fill: --alt for beak and eye-ring. */

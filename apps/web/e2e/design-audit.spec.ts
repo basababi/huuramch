@@ -1,7 +1,8 @@
 import { expect, test } from '@playwright/test';
+import { mn } from '../src/i18n/mn';
 import { auditComputedStyles, open, trackConsoleErrors, type Theme } from './helpers';
 
-const PAGES = ['/', '/dev/ui?freeze=1', '/dev/type'];
+const PAGES = ['/', '/create', '/rules', '/admin', '/dev/ui?freeze=1', '/dev/type'];
 const THEMES: Theme[] = ['dark', 'light'];
 
 for (const theme of THEMES) {
@@ -13,6 +14,21 @@ for (const theme of THEMES) {
       expect(errors).toEqual([]);
     });
   }
+}
+
+for (const theme of THEMES) {
+  test(`§6.7 computed-style audit: missing room and 404 (${theme})`, async ({ page }) => {
+    const errors = trackConsoleErrors(page);
+    await open(page, '/room/0000', theme);
+    await expect(page.getByRole('heading', { name: mn.room.notFoundTitle })).toBeVisible();
+    expect(await page.evaluate(auditComputedStyles)).toEqual([]);
+    expect(errors).toEqual([]);
+
+    // The browser itself logs the 404 status of the document, so only the styles are checked.
+    await open(page, '/no-such-page', theme);
+    await expect(page.getByRole('heading', { name: mn.notFound.title })).toBeVisible();
+    expect(await page.evaluate(auditComputedStyles)).toEqual([]);
+  });
 }
 
 test('applies the requested theme before paint and keeps it', async ({ page }) => {

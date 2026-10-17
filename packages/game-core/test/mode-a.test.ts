@@ -80,6 +80,17 @@ describe('Mode A — clue turns', () => {
     expect(round(game).turnIndex).toBe(1);
   });
 
+  it('ignores a stale "turn done" so a double end never skips the next speaker', () => {
+    const game = confirmAll(start(lobby(4)));
+    const speaker = round(game).speakingOrder[0] as string;
+    // Speaker and host both end turn 0 at the same moment: only one turn passes.
+    act(game, { type: 'TURN_DONE', by: speaker, turnIndex: 0 });
+    act(game, { type: 'TURN_DONE', by: 'p0', turnIndex: 0 });
+    expect(round(game).turnIndex).toBe(1);
+    act(game, { type: 'TURN_DONE', by: 'p0', turnIndex: 1 });
+    expect(round(game).turnIndex).toBe(2);
+  });
+
   it('times each turn when the turn timer is on, and waits forever when it is off', () => {
     const timed = confirmAll(start(lobby(3, { timerPreset: 'fast' })));
     expect(timed.state.deadline).toBe(timed.now + TIMER_PRESETS.fast.turnMs);

@@ -325,9 +325,7 @@ export function YourTurnDemo({ frozen }: { frozen: boolean }) {
   return (
     <YourTurn
       framed
-      deadline={deadline}
-      durationMs={20_000}
-      frozenRemainingMs={frozen ? 9_000 : undefined}
+      timer={{ deadline, durationMs: 20_000, frozenRemainingMs: frozen ? 9_000 : undefined }}
       onDone={() => vibrate(HAPTICS.yourTurn)}
       className="w-full max-w-[22.5rem]"
     />

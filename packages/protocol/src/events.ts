@@ -3,6 +3,7 @@ export const C2S = {
   roomCreate: 'room:create',
   roomJoin: 'room:join',
   roomRejoin: 'room:rejoin',
+  roomPeek: 'room:peek',
   roomLeave: 'room:leave',
   roomUpdateSettings: 'room:updateSettings',
   roomKick: 'room:kick',

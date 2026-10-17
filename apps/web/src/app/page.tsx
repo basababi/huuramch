@@ -22,7 +22,6 @@ export default function HomePage() {
       <nav className="mt-5 flex justify-center">
         <Link
           href="/rules"
-          prefetch={false}
           className="inline-flex min-h-12 items-center link-focus px-4 text-base font-bold underline decoration-[3px] underline-offset-[6px]"
         >
           {mn.home.rules}

@@ -6,7 +6,7 @@ import { checkFat } from '../ui/icon-data';
 import { INK, PAPER } from './animals';
 
 /** Illustrations in the avatar style: paper faces, 3-unit ink lines, flat fills. */
-function Face({ cx, cy, r }: { cx: number; cy: number; r: number }) {
+export function Face({ cx, cy, r }: { cx: number; cy: number; r: number }) {
   return (
     <g>
       <circle cx={cx} cy={cy} r={r} fill={PAPER} />
@@ -17,7 +17,7 @@ function Face({ cx, cy, r }: { cx: number; cy: number; r: number }) {
   );
 }
 
-function Bubble({
+export function Bubble({
   x,
   y,
   w,

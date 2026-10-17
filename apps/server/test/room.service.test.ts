@@ -117,6 +117,22 @@ describe('rooms and sessions', () => {
     expect(h.analytics.map((a) => a.type)).toEqual(['room_created']);
   });
 
+  it('lets a phone peek at a lobby before joining', async () => {
+    const h = harness();
+    const code = await h.room(2);
+    expect(await h.must('x', 'room:peek', { code })).toEqual({
+      phase: 'LOBBY',
+      full: false,
+      players: [
+        { name: 'Бат', animal: 'temee' },
+        { name: 'Тоглогч1', animal: 'mori' },
+      ],
+    });
+    expect(await h.call('x', 'room:peek', { code: '0000' })).toMatchObject({
+      error: { code: 'ROOM_NOT_FOUND' },
+    });
+  });
+
   it('maps nickname problems to specific errors', async () => {
     const h = harness();
     expect(

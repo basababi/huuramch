@@ -1,6 +1,7 @@
 import { randomBytes, randomInt, randomUUID } from 'node:crypto';
 import {
   DURATIONS,
+  MAX_PLAYERS,
   checkName,
   createRoom,
   nextWakeAt,
@@ -23,6 +24,7 @@ import {
   type C2SPayloads,
   type ClientEvent,
   type ErrorCode,
+  type PeekAck,
   type StateSync,
 } from '@khuuramch/protocol';
 import { RateLimiter } from './rate-limiter';
@@ -163,6 +165,8 @@ export class RoomService {
         return this.rejoin(socketId, data as C2SPayloads['room:rejoin']);
       case 'tv:watch':
         return this.watch(socketId, (data as C2SPayloads['tv:watch']).code);
+      case 'room:peek':
+        return this.peek((data as C2SPayloads['room:peek']).code);
       case 'clock:ping':
         return ok({ t0: (data as C2SPayloads['clock:ping']).t0, serverNow: this.now() });
       default:
@@ -239,6 +243,19 @@ export class RoomService {
     return ok({ playerId });
   }
 
+  /** Lobby facts for the join form: phase, whether it is full, which animals are taken. */
+  private async peek(code: string): Promise<Ack<PeekAck>> {
+    const state = await this.store.get(code);
+    if (!state) return ackError('ROOM_NOT_FOUND');
+    return ok({
+      phase: state.phase,
+      full: state.players.length >= MAX_PLAYERS,
+      players: state.players
+        .filter((p) => !p.left)
+        .map((p) => ({ name: p.name, animal: p.animal })),
+    });
+  }
+
   private async watch(socketId: string, code: string): Promise<Ack<unknown>> {
     const state = await this.store.get(code);
     if (!state) return ackError('ROOM_NOT_FOUND');
@@ -285,7 +302,11 @@ export class RoomService {
         action = { type: 'FORCE_ROLES', by: me };
         break;
       case 'turn:done':
-        action = { type: 'TURN_DONE', by: me };
+        action = {
+          type: 'TURN_DONE',
+          by: me,
+          turnIndex: (data as C2SPayloads['turn:done']).turnIndex,
+        };
         break;
       case 'discussion:skip':
         action = { type: 'SKIP_DISCUSSION', by: me };

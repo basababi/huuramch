@@ -355,3 +355,119 @@ with a no-op implementation, keyed by an anonymous host account id for a future 
   rate limits) and an end-to-end suite that boots the compiled server and plays Mode A (with a
   mid-game reconnect) and Mode B with four real Socket.IO clients. Stable over repeated runs.
 - No UI changed in this milestone.
+
+---
+
+## Milestone 4 — Web app flows
+
+### D-301 · One room route, phases as screens
+
+`/room/[code]` is a single client app (`PlayerApp`): it restores the seat from `localStorage`
+(`room:rejoin`) or shows the join form, then renders one screen per server phase. Late joiners see
+a spectator screen during a running game and the shared result/scoreboard at its end. Every screen
+derives everything from the projected `PlayerView`; nothing about other players' secrets exists on
+the client to leak. `/tv/[code]` is the same pattern over `TvView`.
+
+### D-302 · Network layer after hydration (§7 budget)
+
+`socket.io-client`, the Zod protocol schemas and the state validation live in `lib/socket.ts`, which
+the store loads with `import()` on first use. Every `state:sync` is still validated with
+`stateSyncSchema` before it reaches the store (§3.2 "both sides validate"); it is just not part of
+the first paint. Reconnects rejoin automatically (socket.io backoff 0.5 s → 5 s, jittered).
+
+### D-303 · Screens as lazy chunks, preloaded
+
+Each phase screen (and `motion`) is a `React.lazy` chunk behind a "Холбогдож байна…" shell. All of
+them are requested immediately after hydration, in parallel with the socket connecting, so phase
+changes never wait on the network. Measured initial JS (gz, `e2e/budget.spec.ts`, enforced in CI):
+`/room` 167 KB, `/tv` 165 KB, `/create` 174 KB, `/` 160 KB, `/rules` 159 KB — budget 180 KB. Before
+the split `/room` was 241 KB.
+
+### D-304 · Vote reveal timeline (§5.8)
+
+The reveal is scripted from the server's `phaseStartedAt` minus the measured clock offset, so every
+phone and the TV land each ballot slip, the verdict card and the stamp at the same moment
+(`useTimeline` re-renders once per step, not per frame). Voters stay secret — only per-target
+tallies exist — so slips are dealt round-robin from the smallest final pile to the largest: piles
+grow together and the winner pulls ahead only at the end. Timings: first slip at 0.5 s, all slips
+within 1.6 s (at most 0.34 s apart), verdict +0.45 s, stamp +0.45 s, all inside the server's 5 s
+phase. A screen opened mid-reveal (a reconnect) shows the steps already played as landed, without
+replaying them or buzzing. Tally avatars never show X eyes before the stamp, even though the
+eliminated flag arrives with the phase.
+
+### D-305 · TV stage
+
+The TV view is laid out once on a fixed 1920×1080 stage and scaled to fit any screen (TV,
+projector, 1366×768 laptop), with 4 px outlines and 6 px shadows set on the stage (§6.4). Type
+sizes target four metres: names 28–32 px, headings 64–128 px, timers 360–460 px.
+
+### D-306 · Races between two phones
+
+The speaker's "Дууслаа" and the host's "Дараагийнх" can land together. `turn:done` now carries the
+`turnIndex` the phone saw; a stale one is a no-op, so one tap never skips the next speaker too
+(game-core test). Other races (two taps on a phase that already ended, a timer expiring as someone
+taps) are answered with `INVALID_PHASE`; the client does not flash an error for those because the
+screen has already moved on.
+
+### D-307 · First-game rules sheet
+
+§5.11's skippable three-card sheet opens for non-host players in the lobby on their first game on
+this device (`khuuramch:rules-seen`). The host is not interrupted while friends scan the QR.
+
+### D-308 · Secrecy in the guess phase
+
+The caught imposter's eight options reach only their phone. In Mode B the outcome screen says
+whether the guess was right but never shows the civilians' word: words stay hidden until the game
+ends (§2.3.7). A wrong guesser does not learn the right word either.
+
+### D-309 · Contrast on red
+
+Paper on `--al` is 4.1:1, enough only for large text. Words on red cards are at least 20 px
+extra-bold; labels sit above the cards on the page surface; the "+2" points pill is ink on green.
+
+### D-310 · The error boundary's copy
+
+`app/error.tsx` is loaded on every route, and importing `mn` there shipped the whole Mongolian copy
+a second time on every page (about 14 KB gz). Its four strings live in `i18n/mn-shell.ts`, which
+`mn` re-exports — a deliberate exception to "all strings in `mn.ts`", still inside `src/i18n/`.
+
+### D-311 · Thumb reach
+
+Primary actions sit in a sticky bottom bar with an opaque surface and an ink rule, so scrolled
+content never shows through. The join form's submit button is pinned the same way, also inside the
+create sheet.
+
+### D-312 · What a waiting screen says
+
+Role reveal: "Бусдыгаа хүлээж байна", avatars with checks, "3/4 бэлэн". Voting after locking:
+"5/7 санал өгсөн" and the avatars of who has not voted — never who voted for whom. Guess: who is
+guessing. Result: who will open the scoreboard. Mode B eliminated players see a note to keep their
+word to themselves.
+
+### Milestone 4 checks
+
+- `e2e/game.spec.ts`: four phones (360×740) and a TV (1920×1080) play Mode A, then Mode B in the
+  same room with cumulative scores; one phone closes mid-round and returns to the same seat and
+  word; the TV never contains a secret word before the result; every phase passes the §6.7
+  computed-style audit in both themes; zero console errors on every device.
+- `e2e/design-audit.spec.ts` now also covers `/create`, `/rules`, `/admin`, a missing room and 404.
+- `e2e/budget.spec.ts`: initial JS ≤ 180 KB gz on six routes.
+- Unit tests: game-core 185, server 24, protocol 15, content 17, web 52 (incl. the reveal plan).
+
+### §6.7 checklist — Milestone 4 ✅
+
+Evidence: `screenshots/milestone-4/` (every phase on a phone in dark + light, the TV, `/create` and
+`/rules`) and the audits above.
+
+| #   | Ban                                          | Result                                                             |
+| --- | -------------------------------------------- | ------------------------------------------------------------------ |
+| 1   | Purple / violet / indigo                     | ✅ none (audited at every phase)                                   |
+| 2   | Gradients, gradient text                     | ✅ none                                                            |
+| 3   | Glass, blur, glow, soft shadows              | ✅ hard offset shadows only; the sheet backdrop is a flat ink wash |
+| 4   | Cream + terracotta / near-black + acid green | ✅ unchanged palette                                               |
+| 5   | shadcn look                                  | ✅ ≥ 3 px outlines, 12 px or pill radii only                       |
+| 6   | Marketing hero, feature grid, fake stats     | ✅ no marketing; admin shows real counts or "—"                    |
+| 7   | Inter / Roboto / system-ui                   | ✅ Rubik + Onest only                                              |
+| 8   | Emoji, sparkles, stock/3D illustration       | ✅ Phosphor Bold, original SVG animals, rules art and stamp        |
+| 9   | Placeholder copy                             | ✅ Mongolian game copy throughout                                  |
+| 10  | Focus removed                                | ✅ yellow ring kept; dialogs use native `<dialog>` focus handling  |

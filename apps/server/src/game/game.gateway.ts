@@ -62,6 +62,11 @@ export class GameGateway
     return this.on(C2S.roomRejoin, s, b);
   }
 
+  @SubscribeMessage(C2S.roomPeek)
+  roomPeek(@ConnectedSocket() s: Socket, @MessageBody() b: unknown) {
+    return this.on(C2S.roomPeek, s, b);
+  }
+
   @SubscribeMessage(C2S.roomLeave)
   roomLeave(@ConnectedSocket() s: Socket, @MessageBody() b: unknown) {
     return this.on(C2S.roomLeave, s, b);

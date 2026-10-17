@@ -3,7 +3,7 @@
 Source of truth: [`CLAUDE.md`](CLAUDE.md). Every deviation or judgment call goes to [`DECISIONS.md`](DECISIONS.md).
 
 Milestones run strictly in order and end with a screenshot pass against §6.7 and a commit.
-Status: **M3 done.** Next: M4 (web app flows).
+Status: **M4 done.** Next: M5 (polish).
 
 ---
 
@@ -134,13 +134,14 @@ rejected with `INVALID_PHASE` / `NOT_HOST` / `NOT_ALLOWED`. Per-socket token buc
 | `room:create`         | `{ nickname, avatar, settings }` | `{ code, playerId, sessionToken }` | anyone                                     |
 | `room:join`           | `{ code, nickname, avatar }`     | `{ playerId, sessionToken }`       | anyone; joins as `waiting` if a round runs |
 | `room:rejoin`         | `{ code, sessionToken }`         | `{ playerId }`                     | holder of a valid token                    |
+| `room:peek`           | `{ code }`                       | `{ phase, full, players }`         | anyone; facts for the join form            |
 | `room:leave`          | `{}`                             | `{}`                               | any player                                 |
 | `room:updateSettings` | `Partial<RoomSettings>`          | `{ settings }`                     | host, LOBBY                                |
 | `room:kick`           | `{ playerId }`                   | `{}`                               | host, LOBBY                                |
 | `game:start`          | `{}`                             | `{}`                               | host, LOBBY, 3–12 active players           |
 | `role:confirm`        | `{}`                             | `{}`                               | player, ROLE_REVEAL                        |
 | `role:force`          | `{}`                             | `{}`                               | host, ROLE_REVEAL, ≥ 30s elapsed           |
-| `turn:done`           | `{}`                             | `{}`                               | current speaker or host, CLUE_TURNS        |
+| `turn:done`           | `{ turnIndex? }`                 | `{}`                               | current speaker or host; stale = no-op     |
 | `discussion:skip`     | `{}`                             | `{}`                               | host, DISCUSSION                           |
 | `vote:cast`           | `{ targetId }`                   | `{}`                               | alive player, VOTING; not self; once       |
 | `guess:submit`        | `{ optionIndex }`                | `{}`                               | the eliminated imposter, IMPOSTER_GUESS    |
@@ -149,8 +150,8 @@ rejected with `INVALID_PHASE` / `NOT_HOST` / `NOT_ALLOWED`. Per-socket token buc
 | `tv:watch`            | `{ code }`                       | `{}`                               | TV view; read-only projection              |
 | `clock:ping`          | `{ t0 }`                         | `{ t0, serverNow }`                | anyone; used to compute clock offset       |
 
-`role:force`, `room:leave`, `round:continue`, `tv:watch` and `clock:ping` extend the spec's "essentials"
-list (see DECISIONS.md).
+`room:peek`, `role:force`, `room:leave`, `round:continue`, `tv:watch` and `clock:ping` extend the
+spec's "essentials" list (see DECISIONS.md D-018, D-306).
 
 ### 4.2 Server → client
 
@@ -219,20 +220,23 @@ contains words or roles before they are revealed to everyone.
 
 ### M4 — Web app flows
 
-- [ ] Socket client with backoff + auto rejoin, Zustand store, clock offset
-- [ ] Home, Create, profile step, Lobby (QR + code, springy grid), Role reveal, Clue turns, Discussion,
+- [x] Socket client with backoff + auto rejoin, Zustand store, clock offset (network layer loads
+      after hydration, D-302)
+- [x] Home, Create, profile step, Lobby (QR + code, springy grid), Role reveal, Clue turns, Discussion,
       Voting, Vote reveal, Imposter guess, Round result, Scoreboard, Rules (+ first-game sheet), TV view
-- [ ] Locked pack sheet + `pack_interest`; admin page
-- [ ] Screenshots of every screen (phone dark/light, TV) + §6.7 pass; commit
+- [x] Locked pack sheet + `pack_interest`; admin page; Mongolian 404 and error pages
+- [x] Screenshots of every screen (phone dark/light, TV) + §6.7 pass; commit
 
 ### M5 — Polish
 
 - [ ] Sounds (TV/host only, mute), haptics, wake lock, reduced motion audit, reconnection banner
 - [ ] Empty/error states, copy pass, `aria-live` for turns and reveals, keyboard support on host/TV
-- [ ] Lighthouse mobile (≥90 perf, ≥95 a11y), JS budget ≤180 KB gz on player route; record results
+- [ ] Lighthouse mobile (≥90 perf, ≥95 a11y); record results
+- [x] JS budget ≤180 KB gz on the player route — enforced by `e2e/budget.spec.ts` since M4 (D-303)
 
 ### M6 — E2E + docs
 
-- [ ] Playwright: 4 contexts, full game in Mode A and Mode B, one reconnect mid-round
+- [x] Playwright: 4 contexts, full game in Mode A and Mode B, one reconnect mid-round (`e2e/game.spec.ts`,
+      landed with M4 as its acceptance test; M6 extends it)
 - [ ] README: local setup, env, deploy (web → Vercel, server → Node host with WebSockets, Postgres)
 - [ ] Final Definition-of-Done check (CLAUDE.md §11)

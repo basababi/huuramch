@@ -29,6 +29,8 @@ type AvatarProps = {
   idle?: boolean;
   /** Accessible name; defaults to the animal's Mongolian name. */
   label?: string;
+  /** Inside something that already names it (a labelled button): hidden from assistive tech. */
+  decorative?: boolean;
   className?: string;
 };
 
@@ -39,6 +41,7 @@ export function Avatar({
   eliminated = false,
   idle = false,
   label,
+  decorative = false,
   className,
 }: AvatarProps) {
   const Art = ANIMAL_ART[animal];
@@ -50,8 +53,9 @@ export function Avatar({
       viewBox="0 0 64 64"
       width={size}
       height={size}
-      role="img"
-      aria-label={label ?? mn.animals[animal]}
+      {...(decorative
+        ? { 'aria-hidden': true }
+        : { role: 'img', 'aria-label': label ?? mn.animals[animal] })}
       className={cn('k-avatar shrink-0', className)}
       data-idle={idle ? 'true' : undefined}
       data-eliminated={eliminated ? 'true' : undefined}

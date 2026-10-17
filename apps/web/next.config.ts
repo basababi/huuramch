@@ -3,8 +3,11 @@ import type { NextConfig } from 'next';
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
-  // typedRoutes is switched on in M4, once /create, /room and /rules exist.
+  typedRoutes: true,
   devIndicators: false,
+  // `pnpm dev` only: phones on the same Wi-Fi open the dev server by its LAN address, so let
+  // private-network hosts load dev assets and the HMR socket (Next blocks other hosts by default).
+  allowedDevOrigins: ['192.168.*.*', '10.*.*.*', '172.*.*.*', '*.local'],
 };
 
 export default nextConfig;

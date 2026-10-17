@@ -7,23 +7,29 @@ import { Icon } from '../ui/icon';
 import { checkFat } from '../ui/icon-data';
 import { TimerRing } from './timer-ring';
 
+type Timer = {
+  deadline: number;
+  durationMs: number;
+  clockOffsetMs?: number;
+  frozenRemainingMs?: number;
+};
+
 /**
  * The loudest phone state (§5.5): the whole screen turns yellow with ЧИНИЙ ЭЭЛЖ and a big
  * Дууслаа button in thumb reach. `framed` draws it as a card for the sandbox.
  */
 export function YourTurn({
-  deadline,
-  durationMs,
-  frozenRemainingMs,
+  timer,
   onDone,
   framed = false,
+  busy = false,
   className,
 }: {
-  deadline: number;
-  durationMs: number;
-  frozenRemainingMs?: number;
+  /** Omitted when the room plays without a per-turn timer. */
+  timer?: Timer | null;
   onDone?: () => void;
   framed?: boolean;
+  busy?: boolean;
   className?: string;
 }) {
   return (
@@ -40,15 +46,25 @@ export function YourTurn({
         <br />
         {mn.turn.yourTurn.split(' ')[1]}
       </h2>
-      <TimerRing
-        deadline={deadline}
-        durationMs={durationMs}
-        frozenRemainingMs={frozenRemainingMs}
-        size={150}
-        tone="ink"
-      />
+      {timer && (
+        <TimerRing
+          deadline={timer.deadline}
+          durationMs={timer.durationMs}
+          clockOffsetMs={timer.clockOffsetMs}
+          frozenRemainingMs={timer.frozenRemainingMs}
+          size={150}
+          tone="ink"
+        />
+      )}
       <p className="text-center text-lg leading-snug font-bold">{mn.turn.yourTurnHint}</p>
-      <Button tone="ink" size="lg" block onClick={onDone} iconStart={<Icon icon={checkFat} />}>
+      <Button
+        tone="ink"
+        size="lg"
+        block
+        busy={busy}
+        onClick={onDone}
+        iconStart={<Icon icon={checkFat} />}
+      >
         {mn.turn.done}
       </Button>
     </section>

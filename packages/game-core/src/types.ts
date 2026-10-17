@@ -160,7 +160,11 @@ export type Action =
   | { type: 'START_GAME'; by: string; pool: WordPair[] }
   | { type: 'CONFIRM_ROLE'; playerId: string }
   | { type: 'FORCE_ROLES'; by: string }
-  | { type: 'TURN_DONE'; by: string }
+  /**
+   * `turnIndex`: the turn the sender saw. A stale tap (the speaker and the host both ending the
+   * same turn) is a no-op instead of skipping the next speaker too.
+   */
+  | { type: 'TURN_DONE'; by: string; turnIndex?: number }
   | { type: 'SKIP_DISCUSSION'; by: string }
   | { type: 'CAST_VOTE'; playerId: string; targetId: string }
   | { type: 'SUBMIT_GUESS'; playerId: string; optionIndex: number }

@@ -550,6 +550,7 @@ function apply(ctx: Ctx, action: Action): GameErrorCode | null {
       const error = requirePhase(ctx, 'CLUE_TURNS');
       if (error) return error;
       const r = round(ctx);
+      if (action.turnIndex !== undefined && action.turnIndex !== r.turnIndex) return null;
       if (action.by !== currentSpeakerId(r) && action.by !== s.hostId) return 'NOT_YOUR_TURN';
       r.turnIndex += 1;
       beginTurnOrDiscussion(ctx);

@@ -6,12 +6,15 @@ import { trophy } from '../ui/icon-data';
 /** Winner banner with the ornament band top and bottom (one of its three placements, §6.5). */
 export function WinnerBanner({
   winner,
+  size = 'phone',
   className,
 }: {
   winner: 'civilians' | 'imposters';
+  size?: 'phone' | 'tv';
   className?: string;
 }) {
   const civilians = winner === 'civilians';
+  const tv = size === 'tv';
   return (
     <div
       role="status"
@@ -21,14 +24,24 @@ export function WinnerBanner({
         className,
       )}
     >
-      <span aria-hidden className="block h-3.5 ornament text-paper tv:h-5" />
-      <div className="flex items-center justify-center gap-3 px-4 py-6 tv:gap-6 tv:py-10">
-        <Icon icon={trophy} size={40} className="shrink-0 tv:size-20" />
-        <p className="font-display text-[2rem] leading-[1] font-black [text-wrap:balance] tv:text-[4.5rem]">
+      <span aria-hidden className={cn('block ornament text-paper', tv ? 'h-6' : 'h-3.5')} />
+      <div
+        className={cn(
+          'flex items-center justify-center',
+          tv ? 'gap-8 px-10 py-12' : 'gap-3 px-4 py-6',
+        )}
+      >
+        <Icon icon={trophy} size={tv ? 96 : 40} className="shrink-0" />
+        <p
+          className={cn(
+            'font-display leading-[1] font-black [text-wrap:balance]',
+            tv ? 'text-[6rem]' : 'text-[2rem]',
+          )}
+        >
           {civilians ? mn.result.civiliansWin : mn.result.impostersWin}
         </p>
       </div>
-      <span aria-hidden className="block h-3.5 ornament text-paper tv:h-5" />
+      <span aria-hidden className={cn('block ornament text-paper', tv ? 'h-6' : 'h-3.5')} />
     </div>
   );
 }

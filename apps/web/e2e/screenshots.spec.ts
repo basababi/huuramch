@@ -27,6 +27,8 @@ async function newPage(browser: Browser, size: 'phone' | 'tv', scale = size === 
 
 const PAGES = [
   { name: 'home', path: '/', fullPage: false },
+  { name: 'create', path: '/create', fullPage: true },
+  { name: 'rules', path: '/rules', fullPage: true },
   { name: 'dev-ui', path: '/dev/ui?freeze=1', fullPage: true },
   { name: 'dev-type', path: '/dev/type', fullPage: true },
 ];
